@@ -9,6 +9,7 @@ export const MainContainer = styled.View`
   width: ${windowWidth - 200}px;
   border-radius: 5px;
   padding: 15px;
+  z-index: -1;
 `;
 
 export const ViewButtons = styled.View`
@@ -59,12 +60,12 @@ export const modalBoxStyles = StyleSheet.create({
 		height: 45,
 	},
 	selectedButton: {
-		backgroundColor: '#0038FF',
-		borderColor: '#000',
+		backgroundColor: '#2563eb',
+		borderColor: '#171717',
 	},
 	unselectedButton: {
 		backgroundColor: '#4F80CA',
-		borderColor: '#000',
+		borderColor: '#171717',
 	},
 	selectedLabel: {
 		color: '#FFFFFF',
@@ -88,8 +89,6 @@ export const modalBoxStyles = StyleSheet.create({
 	},
 	scrollViewContent: {
 		gap: 10,
-		flexDirection: 'row',
-		flexWrap: 'wrap',
 		padding: 15,
 	},
 	boxButton: {

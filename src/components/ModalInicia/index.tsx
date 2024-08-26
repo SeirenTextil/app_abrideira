@@ -1,33 +1,32 @@
 /* eslint-disable no-mixed-spaces-and-tabs */
 import { Button, IconButton, Modal, Portal, Snackbar, Text, TextInput } from 'react-native-paper';
 import React, { useState } from 'react';
-import { MainContainerDesmarca, MainContainerMarca } from './styles';
+import { MainContainer } from './styles';
 import { Alert, StyleSheet, View } from 'react-native';
 import { api } from '../../utils/api';
 
-interface ModalLarguraProps {
+interface ModalIniciaProps {
   visible: boolean;
   close: () => void;
-  cartao: string;
-  desmarca: boolean;
   abrideira: string;
+  cracha: string;
 }
 
-export default function ModalLargura({ visible, close, cartao, desmarca, abrideira }: ModalLarguraProps) {
-	const [largura, setLargura] = useState(0);
+export default function ModalInicia({ visible, close, cracha,  abrideira }: ModalIniciaProps) {
+	const [carrinho, setCarrinho] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [dialogVisible, setDialogVisible] = useState(false);
 	const [message, setMessage] = useState('');
 
-	async function marcaCartao(largura: number) {
+	async function marcaCartao(carrinho: string) {
 		setLoading(true);
-		if (largura > 0) {
+		if (carrinho.length > 0) {
 
 			api.post('AbrideiraDesenroladeira/chama-dll?deviceName=API', {
-				nomeDll: 'MarcaCartaoAbrideira',
-				parametros: [`${cartao}|${largura}`]
+				nomeDll: 'IniciaCartaoAbrideira',
+				parametros: [`${abrideira}|${cracha}|${carrinho}`]
 			})
-				.then((response) =>{
+				.then((response) => {
 					const data = response.data.data;
 					if (data.Situacao == '1') {
 						setMessage(data.Mensagem);
@@ -40,7 +39,6 @@ export default function ModalLargura({ visible, close, cartao, desmarca, abridei
 				{
 					setDialogVisible(true);
 					setLoading(false);
-					setLargura(0);
 					close();
 
 				});
@@ -51,30 +49,6 @@ export default function ModalLargura({ visible, close, cartao, desmarca, abridei
 
 		}
 	}
-
-	async function desmarcaCartao() {
-		setLoading(true);
-		await api.post('AbrideiraDesenroladeira/chama-dll?deviceName=API', {
-			nomeDll: 'DesmarcaCartao',
-			parametros: [abrideira]
-		})
-			.then((response) =>{
-				const data = response.data.data;
-				if (data.Situacao == '1') {
-					setMessage(data.Mensagem);
-				}else{
-					setMessage(data.Mensagem);
-				}
-			})
-			.catch((error) =>  Alert.alert('Atenção!', error.message))
-			.finally(() => {
-				setDialogVisible(true);
-				setLoading(false);
-				close();
-
-			});
-	}
-
 	return (
 		<Portal>
 			<Modal
@@ -83,9 +57,9 @@ export default function ModalLargura({ visible, close, cartao, desmarca, abridei
 				onDismiss={close}
 				dismissable
 				visible={visible}
+
 			>
-				{!desmarca &&
-        <MainContainerMarca>
+				<MainContainer>
         	<IconButton
           		style={styles.closeButton}
           		onPress={close}
@@ -93,17 +67,11 @@ export default function ModalLargura({ visible, close, cartao, desmarca, abridei
           		containerColor='#f00'
           		iconColor='#fff'
           	/>
-          	<Text style={styles.text}>Insira a Largura  - {cartao}</Text>
+          	<Text style={styles.text}>Insira o Carrinho</Text>
         		<TextInput
           		mode="flat"
           		style={styles.searchbar}
-          		keyboardType='numeric'
-          		onChangeText={(a) => {
-        			const value = Number(a);
-        			value >= 100
-        				? setLargura(value/100)
-        				: setLargura(value);
-        		}}
+          		onChangeText={(a) => setCarrinho(a)}
         		  cursorColor='#000'
         		  activeUnderlineColor='#000'
         	/>
@@ -125,56 +93,21 @@ export default function ModalLargura({ visible, close, cartao, desmarca, abridei
           			buttonColor="#63A346"
           			contentStyle={styles.actionButtonContent}
           			mode="elevated"
-          			onPress={() => marcaCartao(largura)}
+          			onPress={() => marcaCartao(carrinho)}
           		>
           			<Text style={{color: '#fff', fontWeight: 'bold', fontSize: 16}}>ENVIAR</Text>
 
           		</Button>
           	</View>
-        </MainContainerMarca>
-				}
-				{desmarca &&
-        <MainContainerDesmarca>
-        	<IconButton
-          		style={styles.closeButton}
-          		onPress={close}
-          		icon={'window-close'}
-          		containerColor='#f00'
-          		iconColor='#fff'
-          	/>
-        	<Text style={styles.text}>Deseja desmarcar o cartão: {cartao}?</Text>
-        	<View style={{flexDirection: 'row', gap: 30}}>
 
-        		<Button
-        			textColor="#fff"
-        			buttonColor="#aa0000"
-        			contentStyle={styles.actionButtonContent}
-        			mode="elevated"
-        			onPress={() => close()}
-        		>
-        			<Text style={{color: '#fff', fontWeight: 'bold', fontSize: 16}}>CANCELAR</Text>
 
-        		</Button>
-        		<Button
-        			loading={loading}
-        			textColor="#fff"
-        			buttonColor="#63A346"
-        			contentStyle={styles.actionButtonContent}
-        			mode="elevated"
-        			onPress={() => desmarcaCartao()}
-        		>
-        			<Text style={{color: '#fff', fontWeight: 'bold', fontSize: 16}}>DESMARCAR</Text>
+				</MainContainer>
 
-        		</Button>
-        	</View>
-        </MainContainerDesmarca>
-				}
 			</Modal>
 
 			{message.length > 0 &&
 				<Snackbar
 					visible={dialogVisible}
-
 					onDismiss={() => setDialogVisible(false)}
 					action={{
 						label: 'Fechar',

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, TouchableOpacity, View } from 'react-native';
 import { DataTable, Searchbar, Icon, Button, Text, ActivityIndicator, Tooltip } from 'react-native-paper';
-import { Amostra, MainContainer, TableCell, TableTitle, ViewButtons } from './styles';
+import { Amostra, MainContainer, TableCell, TableTitle, TouchableIcon, ViewButtons } from './styles';
 import ModalBox from '../../components/ModalBox';
 import { mainStyles } from './styles';
 import { api } from '../../utils/api';
@@ -9,6 +9,8 @@ import { ButtonVisibility, Data, ItemListaCartoes } from './types';
 import DialogHelper from '../../components/DialogHelper';
 import ModalProblemas from '../../components/ModalProblemas';
 import ModalLargura from '../../components/ModalLargura';
+import { CrachaOperadorContext } from '../../context/crachaOperadorContext';
+import ModalInicia from '../../components/ModalInicia';
 
 export default function Main() {
 	const arrayColor = [
@@ -32,6 +34,8 @@ export default function Main() {
 	const [searchQueries, setSearchQuery] = useState({
 		searchBarMode: '',
 	});
+	const { codOperador, nomeOperador } = useContext(CrachaOperadorContext);
+
 	const [visible, setVisible] = useState<ButtonVisibility>({});
 	const [dataTable, setDataTable] = useState<ItemListaCartoes[]>();
 	const [showDialog, setShowDialog] = useState(false);
@@ -39,15 +43,16 @@ export default function Main() {
 	const [lastDateUpdate, setLastDateUpdate] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [cartao, setCurrentCartao] = useState('');
-
-	const getVisible = (name: string) => !!visible[name];
+	const [largura, setCurrentLargura] = useState('');
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	const [abrideira, setAbrideira] = useState('6');
 
 	useEffect(() => {
 		getTableData();
 	}, []);
 
 	useEffect(() => {
-		const interval = setInterval(getTableData, 30000);
+		const interval = setInterval(getTableData, 20000);
 		return () => clearInterval(interval);
 	}, []);
 
@@ -60,11 +65,13 @@ export default function Main() {
 		return filter?.icon.toString();
 	}
 
+	const getVisible = (name: string) => !!visible[name];
+
 	async function getTableData(query = ''){
 		setLoading(true);
 		await api.post('AbrideiraDesenroladeira/chama-dll?deviceName=API', {
 			nomeDll: 'GetFilaAbrideira',
-			parametros: ['2']
+			parametros: ['6']
 		}).then((response) => {
 			const data: Data = response.data.data;
 			let currentData = Object.entries(data.ItemListaCartoes) as ItemListaCartoes[];
@@ -75,10 +82,9 @@ export default function Main() {
 				);
 			}
 
-			// Verifica se os dados são diferentes dos últimos dados recebidos
 			if (JSON.stringify(currentData) !== JSON.stringify(lastData)) {
 				setDataTable(currentData);
-				setLastData(currentData); // Atualiza o último resultado
+				setLastData(currentData);
 			}
 			const currentDate = new Date().toLocaleString();
 			setLastDateUpdate(currentDate);
@@ -91,19 +97,39 @@ export default function Main() {
 		;
 	}
 
+	function closeModalLargura(){
+		toggleModal('modalLargura');
+		getTableData();
+	}
+
+	function handlePressButtonDesvia(){
+		toggleModal('modalDesvia');
+	}
+
 	return (
 		<>
 			<ModalBox close={() => toggleModal('modalBox')} visible={getVisible('modalBox')} />
+
 			<ModalProblemas close={() => toggleModal('modalProblemas')} visible={getVisible('modalProblemas')} />
-			<ModalLargura cartao={cartao} close={() => toggleModal('modalLargura')} visible={getVisible('modalLargura')} />
+
+			<ModalLargura abrideira={abrideira} desmarca={largura == '0,00' ? false : true}  cartao={cartao} close={() => closeModalLargura()}
+				visible={getVisible('modalLargura')}
+			/>
+
+			<ModalInicia abrideira={abrideira} cracha={codOperador} close={() => {toggleModal('modalInicia'); getTableData();}}
+				visible={getVisible('modalInicia')}
+			/>
 
 			<DialogHelper close={() => setShowDialog(false)} visible={showDialog}/>
-
 			<MainContainer>
-
 				<TouchableOpacity onPress={() => setShowDialog(!showDialog)} style={mainStyles.helpButton}>
 					<Icon size={18} source="help" color="#fff" />
 				</TouchableOpacity>
+
+				<View style={mainStyles.description}>
+					<Text style={{color: '#fff'}}>{nomeOperador} - {codOperador}</Text>
+					<Text style={{color: '#fff'}}>Abrideira {abrideira}</Text>
+				</View>
 
 				<Searchbar
 					onChangeText={(query) =>{
@@ -112,18 +138,20 @@ export default function Main() {
 					}}
 					value={searchQueries.searchBarMode}
 					placeholder="Pesquise pelo cartão..."
-					onIconPress={() => console.log('')}
 					style={mainStyles.searchbar}
 					inputStyle={{ minHeight: 0}}
 					cursorColor={'#418af0'}
-
 				/>
+
 				<ScrollView
 					refreshControl={<RefreshControl refreshing={false} onRefresh={getTableData} />}
 					stickyHeaderIndices={[1]}
 					style={mainStyles.scrollView}
 				>
-					<Text style={{color: '#fff'}}>Última atualização: {lastDateUpdate}</Text>
+					<Text style={{color: '#fff'}}>
+            Última atualização: {lastDateUpdate}
+					</Text>
+
 
 					<DataTable.Header style={mainStyles.tableHeader}>
 						<TableTitle textStyle={mainStyles.title}>#</TableTitle>
@@ -148,41 +176,43 @@ export default function Main() {
 					<DataTable style={mainStyles.dataTable}>
 						{dataTable && dataTable.map(([,item]) => (
 							<DataTable.Row
-
 								onLongPress={() => {
 									setCurrentCartao(item.Cartao);
+									setCurrentLargura(item.LarguraInformada);
 									toggleModal('modalLargura');
 								}}
-								style={{backgroundColor: `rgb(${item.CorLinha})`, borderColor: '#000'}} key={item.Cartao}>
+								style={{backgroundColor: `rgb(${item.CorLinha})`, borderColor: '#000', }} key={item.Cartao}>
 
 								<Tooltip title={arrayColor.find(({id}) => id === item.PrimeiroIcone)?.name || 'Nenhum Status'}>
-									<TableCell numberOfLines={undefined} textStyle={mainStyles.row} color={getIcon(item.PrimeiroIcone)}>
+									<TouchableIcon color={getIcon(item.PrimeiroIcone)}>
 										<Icon size={26} source={getIcon(item.PrimeiroIcone)}/>
-									</TableCell>
+									</TouchableIcon>
 								</Tooltip>
 
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.Cartao}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.Tipo}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.NomeCliente}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.CodArt}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.CodCor} - {item.NomeCor}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.Divisao}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.GramaDataColor}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.LarguraSol}</TableCell>
+								<TableCell>{item.Cartao}</TableCell>
+								<TableCell>{item.Tipo}</TableCell>
+
+								<TableCell >{item.NomeCliente}</TableCell>
+
+								<TableCell>{item.CodArt}</TableCell>
+								<TableCell>{item.CodCor}- {item.NomeCor}</TableCell>
+								<TableCell>{item.Divisao}</TableCell>
+								<TableCell>{item.GramaDataColor}</TableCell>
+								<TableCell>{item.LarguraSol}</TableCell>
 
 								<Tooltip leaveTouchDelay={3000}
 									title={item.IconeProcessoFazer === 'INFOPCP' ? item.InstrucaoPcp : (arrayColor.find(({ id }) => id === item.IconeProcessoFazer)?.name || 'Nenhum Status')}>
-									<TableCell onPress={() => item.IconeProcessoFazer === 'PROBLEMAS' && toggleModal('modalProblemas')} numberOfLines={undefined} textStyle={mainStyles.row} color={getIcon(item.IconeProcessoFazer)}>
-										<Icon size={26} source={getIcon(item.IconeProcessoFazer)}/>
-									</TableCell>
+									<TouchableIcon onPress={() => item.IconeProcessoFazer === 'PROBLEMAS' && toggleModal('modalProblemas')} color={getIcon(item.IconeProcessoFazer)}>
+										<Icon  size={26} source={getIcon(item.IconeProcessoFazer)}/>
+									</TouchableIcon>
 								</Tooltip>
 
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.LarguraInformada}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.Espera}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.Grupo}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.Rama}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.SequenciaBanhoAgrupa}</TableCell>
-								<TableCell numberOfLines={undefined} textStyle={mainStyles.row}>{item.BoxAgrupamento}</TableCell>
+								<TableCell>{item.LarguraInformada == '0,00' ? '' : item.LarguraInformada}</TableCell>
+								<TableCell>{item.Espera}</TableCell>
+								<TableCell>{item.Grupo}</TableCell>
+								<TableCell>{item.Rama}</TableCell>
+								<TableCell>{item.SequenciaBanhoAgrupa}</TableCell>
+								<TableCell>{item.BoxAgrupamento}</TableCell>
 								<TableCell>
 									<Amostra color={item.CorAmostra} />
 								</TableCell>
@@ -191,6 +221,7 @@ export default function Main() {
 
 
 					</DataTable>
+
 					{dataTable && dataTable?.length === 0  &&
           <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}><Text style={{color: '#fff', textAlign: 'center'}}>Nenhum resultado encontrado</Text>
           </View>
@@ -207,7 +238,7 @@ export default function Main() {
 						contentStyle={mainStyles.actionButtonContent}
 						icon="play"
 						mode="elevated"
-						onPress={() => console.log('Pressed')}
+						onPress={() => toggleModal('modalInicia')}
 					>
             INICIA/FINALIZA
 					</Button>
@@ -227,6 +258,8 @@ export default function Main() {
 						contentStyle={mainStyles.actionButtonContent}
 						icon="call-split"
 						mode="elevated"
+						onPress={() =>  handlePressButtonDesvia()}
+
 					>
             DESVIA
 					</Button>
@@ -236,7 +269,6 @@ export default function Main() {
 						contentStyle={mainStyles.actionButtonContent}
 						icon="alert"
 						mode="elevated"
-						onPress={() => console.log('Pressed')}
 					>
             APONTA
 					</Button>
