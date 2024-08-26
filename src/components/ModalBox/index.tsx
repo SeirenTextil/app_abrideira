@@ -1,7 +1,7 @@
 import { ActivityIndicator, Button,  IconButton, Modal, Portal, Searchbar, SegmentedButtons } from 'react-native-paper';
 import {  MainContainer, ViewActions, ViewBox, ViewButtons, modalBoxStyles } from './styles';
 import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, RefreshControl, ScrollView,  View } from 'react-native';
+import { Alert, FlatList, RefreshControl, ScrollView,  Text,  View } from 'react-native';
 import { api } from '../../utils/api';
 import ModalCartaoBox from '../ModalCartaoBox';
 
@@ -87,13 +87,23 @@ export default function ModalBox({ visible, close }: ModalBoxProps) {
 		const firstDigit = item[1].Box.charAt(0);
 		const color = getColorByFirstDigit(firstDigit);
 		return (
-			<Button onPress={() => getCartoesBox(item[1].Box)}  key={item[1].Box} buttonColor={color} textColor='#fff' style={modalBoxStyles.boxButton}
-				contentStyle={modalBoxStyles.boxButtonContent} mode='elevated'>
-				{item[1].Box}{item[1].Carrinho && '\n' + '(' + item[1].Carrinho + ')'}
+			<Button
+				onPress={() => getCartoesBox(item[1].Box)}
+				key={item[1].Box}
+				buttonColor={color}
+				textColor='#fff'
+				style={modalBoxStyles.boxButton}
+				contentStyle={modalBoxStyles.boxButtonContent}
+				mode='elevated'
+			>
+				<View>
+					<Text numberOfLines={20} style={{ color: '#fff', textAlign: 'center' }}>
+						{item[1].Box} {item[1].Carrinho && '(' + item[1].Carrinho + ')'}
+					</Text>
+				</View>
 			</Button>
 		);
 	}
-
 
 	return (
 		<>

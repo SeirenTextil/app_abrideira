@@ -13,6 +13,7 @@ import { CrachaOperadorContext } from '../../context/crachaOperadorContext';
 import ModalInicia from '../../components/ModalInicia';
 
 export default function Main() {
+	//array de icones
 	const arrayColor = [
 		{ id: 'POKER16', icon: 'fruit-citrus', name: 'Banho Utilizando Corante Cítrico' },
 		{ id: 'BLACKPIN16', icon: 'clipboard-alert', name: 'Marcado c/ Problema de Largura' },
@@ -31,6 +32,7 @@ export default function Main() {
 		{ id: 'INFOPCP', icon: 'information', name: 'Instrução do Setor Pcp' },
 		{ id: 'PROBLEMAS', icon: 'alert', name: 'Problemas' },
 	];
+
 	const [searchQueries, setSearchQuery] = useState({
 		searchBarMode: '',
 	});

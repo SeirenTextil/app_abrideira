@@ -25,16 +25,11 @@ export const ViewBox = styled.View`
   background-color: #152F46;
 `;
 
-
 export const ViewActions = styled.View`
   flex: 1;
   flex-direction: row;
   gap: 10px;
 `;
-
-
-
-
 
 export const modalBoxStyles = StyleSheet.create({
 	modal: {
@@ -93,10 +88,14 @@ export const modalBoxStyles = StyleSheet.create({
 	},
 	boxButton: {
 		borderRadius: 5,
+		alignContent: 'center',
+		justifyContent: 'center',
 	},
 	boxButtonContent: {
 		height: 68,
-		width: 150
+		width: 150,
+		alignContent: 'center',
+		justifyContent: 'center',
 	},
 	actionButtonsContainer: {
 		justifyContent: 'space-between',
