@@ -1,5 +1,6 @@
 import { Button, Dialog, Icon, Portal, Text } from 'react-native-paper';
 import { TextInfo, ViewInfo } from './styles';
+import { View } from 'react-native';
 
 interface DialogHelperProps{
   visible: boolean;
@@ -88,11 +89,23 @@ export default function DialogHelper({visible, close}: DialogHelperProps){
 								<Icon size={28} source={'alert'}/> = Problemas
 							</TextInfo>
 						</>
-
-
-
-
 					</ViewInfo>
+
+					<View style={{flexDirection: 'row', gap: 10}}>
+
+						<View style={{backgroundColor: 'rgb(126,251,99)', padding: 5}}>
+							<Text style={{textAlign: 'center', color: '#000', fontWeight: 'bold'}}>
+              Linha verde: Banho iniciado, tempo para abrir cumprido
+							</Text>
+						</View>
+
+						<View style={{backgroundColor: 'rgb(175,39,53)', padding: 5}}>
+							<Text style={{textAlign: 'center', color: '#fff', fontWeight: 'bold'}}>
+              Linha vermelha: Banho iniciado, aguardando tempo para finalizar
+							</Text>
+						</View>
+
+					</View>
 				</Dialog.Content>
 				<Dialog.Actions>
 					<Button onPress={close}>

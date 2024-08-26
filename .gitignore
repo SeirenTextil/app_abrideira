@@ -3,10 +3,13 @@
 # dependencies
 node_modules/
 
+
 # Expo
 .expo/
 dist/
 web-build/
+android/
+.idea/
 
 # Native
 *.orig.*
